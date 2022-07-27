@@ -22,15 +22,18 @@ namespace chatik
         {
             Console.WriteLine("Current working directory: " + Directory.GetCurrentDirectory());
             listener = new HttpListener();
-            string link = ("http://*:80/");
+            string link = ("http://*:81/");
             listener.Prefixes.Add($"{link}");
             listener.Start();
             new Thread(HttpRequestsListener).Start();
+            new Thread(Request).Start();
             
         }
 
         private static void HttpRequestsListener()
         {
+            
+            string doubleContext = "";
             string path = "test.txt";
             string urlAdd = "sosuxui";
             fileLinks.TryAdd(urlAdd, path);
@@ -41,13 +44,26 @@ namespace chatik
             while (true)
             {
 
-
+                bool switcer = true;
                 string message = Console.ReadLine();
                 /*var systemPath = System.Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);*/
                 /*var complete = Path.Combine(systemPath, "files");*/
                 if (message == "delete")
                 {
                     File.Delete(path);
+                    if (File.Exists(path))
+                    {
+                        Console.WriteLine("error\nTrying another time...");
+                        File.Delete(path);
+                        if (!File.Exists(path))
+                        {
+                            Console.WriteLine("error again, try another time");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("deleted");
+                    }
                 }
                 if (message != "send" && message != "delete")
                 {
@@ -80,39 +96,7 @@ namespace chatik
 
 
                 /*Console.WriteLine(message);*/
-                if (message == "send")
-                {
-                    Console.WriteLine("sending..\n");
-                    HttpListenerContext context = listener.GetContext();
-                    var contextPath = context.Request.Url.AbsolutePath;
-                    HttpListenerResponse response = context.Response;
-                    string clientIP = context.Request.RemoteEndPoint.ToString();
-                    Console.WriteLine(clientIP);
-                    var fileCodeName = contextPath.Remove(0, 1);
-                    Console.WriteLine(contextPath);
-                    Console.WriteLine(fileCodeName);
-                    response.KeepAlive = true;
-                    using (StreamReader sr = File.OpenText(path))
-                    {
-                        string myResponse = "";
-                        string s = "";
-                        while ((s = sr.ReadLine()) != null)
-                        {
-
-                            myResponse += $"{s}\n";
-
-                        }
-                        context.Response.StatusCode = (int)HttpStatusCode.OK;
-                        context.Response.OutputStream.Write(Encoding.UTF8.GetBytes(myResponse));
-                        context.Response.Close();
-                        Console.WriteLine("sent");
-                    }
-
-
-                    message = " ";
-
-
-                }
+                
                 message = " ";
 
                 /*byte[] output = Encoding.ASCII.GetBytes($"{message}\n");
@@ -137,5 +121,48 @@ namespace chatik
 
 
         }
-    }
+        public static void Request()
+        {
+            string path = "test.txt";
+            string urlAdd = "sosuxui";
+            while (true)
+            {
+                Console.WriteLine("sending..\n");
+                HttpListenerContext context = listener.GetContext();
+                var contextPath = context.Request.Url.AbsolutePath;
+                HttpListenerResponse response = context.Response;
+                string clientIP = context.Request.RemoteEndPoint.ToString();
+                Console.WriteLine(clientIP);
+                var fileCodeName = contextPath.Remove(0, 1);
+                Console.WriteLine(fileCodeName);
+                if (fileCodeName == urlAdd)
+                {
+                    if (File.Exists(path))
+                    {
+                        using (StreamReader sr = File.OpenText(path))
+                        {
+                            string myResponse = "";
+                            string s = "";
+                            while ((s = sr.ReadLine()) != null)
+                            {
+
+                                myResponse += $"{s}\n";
+
+                            }
+                            context.Response.StatusCode = (int)HttpStatusCode.OK;
+                            context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{clientIP} - {myResponse}"));
+                            context.Response.Close();
+                            Console.WriteLine("sent");
+
+                        }
+
+                    }
+                    else
+                    {
+                        Console.WriteLine("Nothing has been written yet");
+                    }
+                }
+            }
+        }
+    }  
 }
