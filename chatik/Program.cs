@@ -13,31 +13,53 @@ using System.Threading.Tasks;
 
 namespace chatik
 {
-    static class ChatMessage
+    /*class LoginData
+    {
+        public string path;
+        public string udlAdd;
+        public LoginData(string x, string y)
+        {
+            path = x;
+            udlAdd = y;
+            
+        }
+        
+    }
+*/
+    class ChatMessage
     {
         public static HttpListener listener;
         public static ConcurrentDictionary<string, string> fileLinks = new ConcurrentDictionary<string, string>();
+        static string path;
+        static string urlAdd;
+
 
         public static void Main()
         {
+            
             Console.WriteLine("Current working directory: " + Directory.GetCurrentDirectory());
             listener = new HttpListener();
             string link = ("http://*:81/");
             listener.Prefixes.Add($"{link}");
             listener.Start();
             new Thread(HttpRequestsListener).Start();
-            new Thread(Request).Start();
+            
             
         }
 
         private static void HttpRequestsListener()
         {
-            
-            string doubleContext = "";
-            string path = "test.txt";
-            string urlAdd = "sosuxui";
+            Console.WriteLine("Enter your nickname");
+            path = Console.ReadLine() + ".txt";
+            urlAdd = Guid.NewGuid().ToString();
             fileLinks.TryAdd(urlAdd, path);
             Console.WriteLine($"http://prompt.modeller.fvds.ru/" + urlAdd);
+            /*LoginData loginData = new LoginData(path, urlAdd);*/
+
+            if (path as string != null)
+            {
+                new Thread(Request).Start();
+            }
             /*var context = listener.GetContext();
             var contextPath = context.Request.Url.AbsolutePath;*/
 
@@ -123,8 +145,9 @@ namespace chatik
         }
         public static void Request()
         {
-            string path = "test.txt";
-            string urlAdd = "sosuxui";
+
+            /*string path = 
+            string urlAdd = "sosuxui";*/
             while (true)
             {
                 Console.WriteLine("sending..\n");
@@ -159,7 +182,10 @@ namespace chatik
                     }
                     else
                     {
-                        Console.WriteLine("Nothing has been written yet");
+                        context.Response.StatusCode = (int)HttpStatusCode.OK;
+                        context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"This is the start of the conversation"));
+                        context.Response.Close();
+                        Console.WriteLine("sent");
                     }
                 }
             }
