@@ -31,7 +31,7 @@ namespace chatik
         public static HttpListener listener;
         public static ConcurrentDictionary<string, string> fileLinks = new ConcurrentDictionary<string, string>();
         static string path;
-        static string urlAdd;
+        static string urlAdd = "request";
 
 
         public static void Main()
@@ -46,9 +46,9 @@ namespace chatik
             
             
         }
-
         private static void HttpRequestsListener()
         {
+
             Console.WriteLine("Enter your nickname");
             path = Console.ReadLine() + ".txt";
             urlAdd = Guid.NewGuid().ToString();
@@ -70,6 +70,14 @@ namespace chatik
                 string message = Console.ReadLine();
                 /*var systemPath = System.Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);*/
                 /*var complete = Path.Combine(systemPath, "files");*/
+                if (message == "change")
+                {
+
+                    path = Console.ReadLine() + ".txt";
+                    urlAdd = Guid.NewGuid().ToString();
+                    Console.WriteLine(urlAdd);
+
+                }
                 if (message == "delete")
                 {
                     File.Delete(path);
@@ -87,7 +95,7 @@ namespace chatik
                         Console.WriteLine("deleted");
                     }
                 }
-                if (message != "send" && message != "delete")
+                if (message != "send" && message != "delete" && message != "change")
                 {
                     
                     // This text is added only once to the file.
@@ -150,16 +158,16 @@ namespace chatik
             string urlAdd = "sosuxui";*/
             while (true)
             {
-                Console.WriteLine("sending..\n");
+                Console.WriteLine("Awaiting for a connection..\n");
                 HttpListenerContext context = listener.GetContext();
                 var contextPath = context.Request.Url.AbsolutePath;
                 HttpListenerResponse response = context.Response;
                 string clientIP = context.Request.RemoteEndPoint.ToString();
-                Console.WriteLine(clientIP);
                 var fileCodeName = contextPath.Remove(0, 1);
-                Console.WriteLine(fileCodeName);
                 if (fileCodeName == urlAdd)
                 {
+                    Console.WriteLine(clientIP);
+                    Console.WriteLine(fileCodeName);
                     if (File.Exists(path))
                     {
                         using (StreamReader sr = File.OpenText(path))
@@ -175,7 +183,7 @@ namespace chatik
                             context.Response.StatusCode = (int)HttpStatusCode.OK;
                             context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{clientIP} - {myResponse}"));
                             context.Response.Close();
-                            Console.WriteLine("sent");
+                            Console.WriteLine("Connection established");
 
                         }
 
@@ -183,7 +191,7 @@ namespace chatik
                     else
                     {
                         context.Response.StatusCode = (int)HttpStatusCode.OK;
-                        context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"This is the start of the conversation"));
+                        context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"<html><head><meta charset='utf8'></head><body>This is the start of conversation</body></html>"));
                         context.Response.Close();
                         Console.WriteLine("sent");
                     }
