@@ -33,24 +33,48 @@ namespace chatik
         public static ConcurrentDictionary<string, string> fileLinks = new ConcurrentDictionary<string, string>();
         public System.Net.CookieCollection Cookies { get; set; }
         static string path;
-        static string urlAdd = "chatik";
+        static string urlAdd = "nechatik";
+        static string urlHttp = "main";
 
 
         public static void Main()
         {
+
             
             Console.WriteLine("Current working directory: " + Directory.GetCurrentDirectory());
             listener = new HttpListener();
-            string link = ("http://*:81/");
-            listener.Prefixes.Add($"{link}");
+            listener.Prefixes.Add("http://*:81/");
             listener.IgnoreWriteExceptions = true;
             listener.Start();
+            /*new Thread(HtmlPage).Start();*/
             new Thread(HttpRequestsListener).Start();
             
             
         }
+        /*public static void HtmlPage()
+        {
+            listener = new HttpListener();
+            string link = ("http://localhost:2002/");
+            listener.Prefixes.Add($"{link}");
+            listener.IgnoreWriteExceptions = true;
+            listener.Start();
+            while (true)
+            {
+                HttpListenerContext context = listener.GetContext();
+                HttpListenerResponse response = context.Response;
+                string htmlPage = File.ReadAllText("chatik.html");
+                byte[] buffer = Encoding.UTF8.GetBytes(htmlPage);
+
+                response.ContentLength64 = buffer.Length;
+                Stream st = response.OutputStream;
+                st.Write(buffer, 0, buffer.Length);
+
+                context.Response.Close();
+            }
+        }*/
         private static void HttpRequestsListener()
         {
+            
             Request();
 
             /*Console.WriteLine("Enter your nickname");*/
@@ -173,99 +197,129 @@ namespace chatik
                 string customerID = null;
                 string user_name;
                 bool cookies = false;
-                using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
+                Cookie cookie = request.Cookies["ID"];
 
+                if (cookie == null || fileCodeName == "chatik")
                 {
-                    string text = reader.ReadToEnd().ToString();
-                    var tokens = text.Split("&");
-                    var formData = new Dictionary<string, string>();
-                    for (var i = 0; i < tokens.Count(); i++)
-                    {
-                        if (tokens[i] == "")
-                            break;
-                        var group = tokens[i].ToString().Split("=");
-                        
-                        var item = group[0].ToString();
-                        var value = group[1].ToString();
-                        
-                        if (!formData.ContainsKey(item))
-                            formData.Add(item, value);
-                    }
+                    Console.WriteLine("Main page requested");
+                    string htmlPage = File.ReadAllText("chatik.html");
+                    byte[] buffer = Encoding.UTF8.GetBytes(htmlPage);
+
+                    response.ContentLength64 = buffer.Length;
+                    Stream st = response.OutputStream;
+                    st.Write(buffer, 0, buffer.Length);
+
+                    context.Response.Close();
                     
-                    if (formData.TryGetValue("user_name", out string username))
-                        user_name = formData["user_name"];
-                    else
-                    {
-                        user_name = "";
-                    }
-                    if (formData.TryGetValue("cookies", out string cookies_switcher))
-                    {
-                        cookies = true;
-                    }
-
-                }
-                
-                if (cookies || user_name == "")
-                {
-                    Cookie cookie = request.Cookies["ID"];
-                    if (cookie != null)
-                    {
-                        customerID = cookie.Value;
-                    }
-                    if (customerID != null)
-                    {
-                        Console.WriteLine("Found the cookie!");
-                    }
-                    if (customerID == null || (customerID.ToString() != user_name && user_name != ""))
-                    {
-                        customerID = user_name;
-                        Cookie cook = new Cookie("ID", customerID);
-                        response.AppendCookie(cook);
-
-                    }
-                    path = $"{customerID}.txt";
                 }
                 else
                 {
-                    path = $"{user_name}.txt";
-                }
+                    using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
 
-
-                /*urlAdd = Guid.NewGuid().ToString();
-                fileLinks.TryAdd(urlAdd, path);*/
-
-                if (fileCodeName != "favicon.ico")
-                {
-                    Console.WriteLine(clientIP);
-                    Console.WriteLine(fileCodeName);
-                    if (File.Exists(path))
                     {
-                        using (StreamReader sr = File.OpenText(path))
+                        string text = reader.ReadToEnd().ToString();
+                        var tokens = text.Split("&");
+                        var formData = new Dictionary<string, string>();
+                        for (var i = 0; i < tokens.Count(); i++)
                         {
-                            string myResponse = "";
-                            string s = "";
-                            while ((s = sr.ReadLine()) != null)
-                            {
+                            if (tokens[i] == "")
+                                break;
+                            var group = tokens[i].ToString().Split("=");
 
-                                myResponse += $"{s}\n";
+                            var item = group[0].ToString();
+                            var value = group[1].ToString();
 
-                            }
-                            context.Response.StatusCode = (int)HttpStatusCode.OK;
-                            context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{clientIP} - {myResponse}"));
-                            context.Response.Close();
-                            Console.WriteLine("Connection established");
+                            if (!formData.ContainsKey(item))
+                                formData.Add(item, value);
+                        }
 
+                        if (formData.TryGetValue("user_name", out string username))
+                            user_name = formData["user_name"];
+                        else
+                        {
+                            user_name = "";
+                        }
+                        if (formData.TryGetValue("cookies", out string cookies_switcher))
+                        {
+                            cookies = true;
                         }
 
                     }
+
+                    if (cookies || user_name == "")
+                    {
+                        
+                        if (cookie != null)
+                        {
+                            customerID = cookie.Value;
+                        }
+                        if (customerID != null)
+                        {
+                            Console.WriteLine("Found the cookie!");
+                        }
+                        if (customerID == null || (customerID.ToString() != user_name && user_name != ""))
+                        {
+                            customerID = user_name;
+                            Cookie cook = new Cookie("ID", customerID);
+                            response.AppendCookie(cook);
+
+                        }
+                        path = $"{customerID}.txt";
+                    }
                     else
                     {
-                        context.Response.StatusCode = (int)HttpStatusCode.OK;
-                        context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"<html><head><meta charset='utf8'></head><body>This is the start of conversation</body></html>"));
+                        path = $"{user_name}.txt";
+                    }
+
+
+                    /*urlAdd = Guid.NewGuid().ToString();
+                    fileLinks.TryAdd(urlAdd, path);*/
+                    /*if (user_name == "chatik")
+                    {
+                        string htmlPage = File.ReadAllText("chatik.html");
+                        byte[] buffer = Encoding.UTF8.GetBytes(htmlPage);
+
+                        response.ContentLength64 = buffer.Length;
+                        Stream st = response.OutputStream;
+                        st.Write(buffer, 0, buffer.Length);
+
                         context.Response.Close();
-                        Console.WriteLine("sent");
+                    }*/
+                    if (fileCodeName != "favicon.ico")
+                    {
+                        Console.WriteLine(clientIP);
+                        Console.WriteLine(fileCodeName);
+                        if (File.Exists(path))
+                        {
+                            using (StreamReader sr = File.OpenText(path))
+                            {
+                                string myResponse = "";
+                                string s = "";
+                                while ((s = sr.ReadLine()) != null)
+                                {
+
+                                    myResponse += $"{s}\n";
+
+                                }
+                                context.Response.StatusCode = (int)HttpStatusCode.OK;
+                                context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{clientIP} - {myResponse}"));
+                                context.Response.Close();
+                                Console.WriteLine("Connection established");
+
+                            }
+
+                        }
+                        else
+                        {
+                            context.Response.StatusCode = (int)HttpStatusCode.OK;
+                            context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"<html><head><meta charset='utf8'></head><body>This is the start of conversation</body></html>"));
+                            context.Response.Close();
+                            Console.WriteLine("sent");
+                        }
                     }
                 }
+                
+                
             }
         }
     }  
