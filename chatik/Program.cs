@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+
 namespace chatik
 {
     /*class LoginData
@@ -30,8 +31,9 @@ namespace chatik
     {
         public static HttpListener listener;
         public static ConcurrentDictionary<string, string> fileLinks = new ConcurrentDictionary<string, string>();
+        public System.Net.CookieCollection Cookies { get; set; }
         static string path;
-        static string urlAdd = "request";
+        static string urlAdd = "chatik";
 
 
         public static void Main()
@@ -41,6 +43,7 @@ namespace chatik
             listener = new HttpListener();
             string link = ("http://*:81/");
             listener.Prefixes.Add($"{link}");
+            listener.IgnoreWriteExceptions = true;
             listener.Start();
             new Thread(HttpRequestsListener).Start();
             
@@ -48,18 +51,17 @@ namespace chatik
         }
         private static void HttpRequestsListener()
         {
+            Request();
 
-            Console.WriteLine("Enter your nickname");
-            path = Console.ReadLine() + ".txt";
-            urlAdd = Guid.NewGuid().ToString();
-            fileLinks.TryAdd(urlAdd, path);
+            /*Console.WriteLine("Enter your nickname");*/
+            /*path = Console.ReadLine() + ".txt";*/
             Console.WriteLine($"http://prompt.modeller.fvds.ru/" + urlAdd);
             /*LoginData loginData = new LoginData(path, urlAdd);*/
 
-            if (path as string != null)
+           /* if (path as string != null)
             {
                 new Thread(Request).Start();
-            }
+            }*/
             /*var context = listener.GetContext();
             var contextPath = context.Request.Url.AbsolutePath;*/
 
@@ -158,13 +160,56 @@ namespace chatik
             string urlAdd = "sosuxui";*/
             while (true)
             {
+                
                 Console.WriteLine("Awaiting for a connection..\n");
                 HttpListenerContext context = listener.GetContext();
+
                 var contextPath = context.Request.Url.AbsolutePath;
+                var request = context.Request;
                 HttpListenerResponse response = context.Response;
                 string clientIP = context.Request.RemoteEndPoint.ToString();
                 var fileCodeName = contextPath.Remove(0, 1);
-                if (fileCodeName == urlAdd)
+                string user_name;
+                string customerID = null;
+                
+                using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
+
+                {
+                    string text = reader.ReadToEnd().ToString();
+                    if (text.Contains("user"))
+                    {
+                        string[] separatedData = text.Split("=");
+                        user_name = separatedData[1];
+                    }
+                    else { user_name = ""; }
+                    
+                }
+                
+                Cookie cookie = request.Cookies["ID"];
+                if (cookie != null)
+                {
+                    customerID = cookie.Value;
+                }
+                if (customerID != null)
+                {
+                    Console.WriteLine("Found the cookie!");
+                }
+                if (customerID == null || (customerID.ToString() != user_name && user_name != ""))
+                {
+                    if (customerID.ToString() != "")
+                    {
+                        Console.WriteLine($"-{customerID.ToString()}-");
+                        Console.WriteLine("у вас диагностировали долбоебизм");
+                    }
+                    customerID = user_name;
+                    Cookie cook = new Cookie("ID", customerID);
+                    response.AppendCookie(cook);
+                }
+                path = $"{customerID}.txt";
+                /*urlAdd = Guid.NewGuid().ToString();
+                fileLinks.TryAdd(urlAdd, path);*/
+
+                if (fileCodeName != "favicon.ico")
                 {
                     Console.WriteLine(clientIP);
                     Console.WriteLine(fileCodeName);
