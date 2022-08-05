@@ -169,20 +169,36 @@ namespace chatik
                 HttpListenerResponse response = context.Response;
                 string clientIP = context.Request.RemoteEndPoint.ToString();
                 var fileCodeName = contextPath.Remove(0, 1);
-                string user_name;
-                string customerID = null;
+                Console.WriteLine("connection found");
                 
+                string customerID = null;
+                string user_name;
                 using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
 
                 {
                     string text = reader.ReadToEnd().ToString();
-                    if (text.Contains("user"))
+                    var tokens = text.Split("&");
+                    var formData = new Dictionary<string, string>();
+                    for (var i = 0; i < tokens.Count(); i++)
                     {
-                        string[] separatedData = text.Split("=");
-                        user_name = separatedData[1];
+                        if (tokens[i] == "")
+                            break;
+                        var group = tokens[i].ToString().Split("=");
+                        
+                        var item = group[0].ToString();
+                        var value = group[1].ToString();
+                        
+                        if (!formData.ContainsKey(item))
+                            formData.Add(item, value);
                     }
-                    else { user_name = ""; }
                     
+                    if (formData.TryGetValue("user_name", out string username))
+                        user_name = formData["user_name"];
+                    else
+                    {
+                        user_name = "";
+                    }
+
                 }
                 
                 Cookie cookie = request.Cookies["ID"];
@@ -195,12 +211,7 @@ namespace chatik
                     Console.WriteLine("Found the cookie!");
                 }
                 if (customerID == null || (customerID.ToString() != user_name && user_name != ""))
-                {
-                    if (customerID.ToString() != "")
-                    {
-                        Console.WriteLine($"-{customerID.ToString()}-");
-                        Console.WriteLine("у вас диагностировали долбоебизм");
-                    }
+                { 
                     customerID = user_name;
                     Cookie cook = new Cookie("ID", customerID);
                     response.AppendCookie(cook);
