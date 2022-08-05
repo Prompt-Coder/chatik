@@ -169,10 +169,10 @@ namespace chatik
                 HttpListenerResponse response = context.Response;
                 string clientIP = context.Request.RemoteEndPoint.ToString();
                 var fileCodeName = contextPath.Remove(0, 1);
-                Console.WriteLine("connection found");
                 
                 string customerID = null;
                 string user_name;
+                bool cookies = false;
                 using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
 
                 {
@@ -198,25 +198,39 @@ namespace chatik
                     {
                         user_name = "";
                     }
+                    if (formData.TryGetValue("cookies", out string cookies_switcher))
+                    {
+                        cookies = true;
+                    }
 
                 }
                 
-                Cookie cookie = request.Cookies["ID"];
-                if (cookie != null)
+                if (cookies || user_name == "")
                 {
-                    customerID = cookie.Value;
+                    Cookie cookie = request.Cookies["ID"];
+                    if (cookie != null)
+                    {
+                        customerID = cookie.Value;
+                    }
+                    if (customerID != null)
+                    {
+                        Console.WriteLine("Found the cookie!");
+                    }
+                    if (customerID == null || (customerID.ToString() != user_name && user_name != ""))
+                    {
+                        customerID = user_name;
+                        Cookie cook = new Cookie("ID", customerID);
+                        response.AppendCookie(cook);
+
+                    }
+                    path = $"{customerID}.txt";
                 }
-                if (customerID != null)
+                else
                 {
-                    Console.WriteLine("Found the cookie!");
+                    path = $"{user_name}.txt";
                 }
-                if (customerID == null || (customerID.ToString() != user_name && user_name != ""))
-                { 
-                    customerID = user_name;
-                    Cookie cook = new Cookie("ID", customerID);
-                    response.AppendCookie(cook);
-                }
-                path = $"{customerID}.txt";
+
+
                 /*urlAdd = Guid.NewGuid().ToString();
                 fileLinks.TryAdd(urlAdd, path);*/
 
