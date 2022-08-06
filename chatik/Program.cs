@@ -179,6 +179,9 @@ namespace chatik
         }
         public static void Request()
         {
+            string firstPartOfHtml = "<!DOCTYPE html >\r\n\r\n \r\n<head>\r\n    <meta charset=\"utf-8\" />\r\n    <title></title>\r\n</head>\r\n<body>\r\n    <form action=\"http://127.0.0.1:81/message\" method =\"post\">\r\n        <ul>\r\n            <li class=\"input_message\">\r\n                <input type=\"text\" id=\"name\" name=\"message\" placeholder=\"write message\" />\r\n            </li>\r\n            <li class=\"button\">\r\n                <button type=\"submit\">Send your message</button>\r\n            </li>\r\n        </ul>\r\n        ";
+            string secondPartOfHtml = "\r\n    </form>\r\n\r\n    <style>\r\n        form {\r\n            /* Center the form on the page */\r\n            margin: 0 auto;\r\n            width: 400px;\r\n            /* Form outline */\r\n            padding: 1em;\r\n            border: 1px solid #CCC;\r\n            border-radius: 1em;\r\n        }\r\n\r\n        ul {\r\n            list-style: none;\r\n            padding: 0;\r\n            margin: 0;\r\n        }\r\n\r\n        form li + li {\r\n            margin-top: 1em;\r\n        }\r\n\r\n        label {\r\n            /* Uniform size & alignment */\r\n            display: inline-block;\r\n            width: 90px;\r\n            text-align: right;\r\n        }\r\n\r\n        input,\r\n        textarea {\r\n            /* To make sure that all text fields have the same font settings\r\n     By default, textareas have a monospace font */\r\n            font: 1em sans-serif;\r\n            /* Uniform text field size */\r\n            width: 300px;\r\n            box-sizing: border-box;\r\n            /* Match form field borders */\r\n            border: 1px solid #999;\r\n        }\r\n\r\n            input:focus,\r\n            textarea:focus {\r\n                /* Additional highlight for focused elements */\r\n                border-color: #000;\r\n            }\r\n\r\n        textarea {\r\n            /* Align multiline text fields with their labels */\r\n            vertical-align: top;\r\n            /* Provide space to type some text */\r\n            height: 5em;\r\n        }\r\n\r\n        .button {\r\n            /* Align buttons with the text fields */\r\n            padding-left: 90px; /* same size as the label elements */\r\n        }\r\n\r\n        button {\r\n            /* This extra margin represent roughly the same space as the space\r\n     between the labels and their text fields */\r\n            margin-left: .5em;\r\n        }\r\n    </style>\r\n</body>\r\n</html>";
+
 
             /*string path = 
             string urlAdd = "sosuxui";*/
@@ -198,8 +201,8 @@ namespace chatik
                 string user_name;
                 bool cookies = false;
                 Cookie cookie = request.Cookies["ID"];
-
-                if (cookie == null || fileCodeName == "chatik")
+                string myCustomer = cookie.Value;
+                if (fileCodeName == "chatik")
                 {
                     Console.WriteLine("Main page requested");
                     string htmlPage = File.ReadAllText("chatik.html");
@@ -208,7 +211,9 @@ namespace chatik
                     response.ContentLength64 = buffer.Length;
                     Stream st = response.OutputStream;
                     st.Write(buffer, 0, buffer.Length);
-
+                    customerID = "";
+                    Cookie cook = new Cookie("ID", customerID);
+                    response.AppendCookie(cook);
                     context.Response.Close();
                     
                 }
@@ -235,9 +240,16 @@ namespace chatik
 
                         if (formData.TryGetValue("user_name", out string username))
                             user_name = formData["user_name"];
-                        else
+                        else 
                         {
                             user_name = "";
+                        }
+                        if (formData.TryGetValue("message", out string userMessages))
+                        {
+                            using (StreamWriter sw = File.AppendText($"{myCustomer}.txt"))
+                            {
+                                sw.WriteLine($"{userMessages}");
+                            }
                         }
                         if (formData.TryGetValue("cookies", out string cookies_switcher))
                         {
@@ -298,11 +310,11 @@ namespace chatik
                                 while ((s = sr.ReadLine()) != null)
                                 {
 
-                                    myResponse += $"{s}\n";
+                                    myResponse += $"{s}\n\r";
 
                                 }
                                 context.Response.StatusCode = (int)HttpStatusCode.OK;
-                                context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{clientIP} - {myResponse}"));
+                                context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{firstPartOfHtml}<p>{myResponse}</p>{secondPartOfHtml}"));
                                 context.Response.Close();
                                 Console.WriteLine("Connection established");
 
@@ -317,9 +329,7 @@ namespace chatik
                             Console.WriteLine("sent");
                         }
                     }
-                }
-                
-                
+                }     
             }
         }
     }  
