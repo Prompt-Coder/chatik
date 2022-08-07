@@ -104,23 +104,7 @@ namespace chatik
                     Console.WriteLine(urlAdd);
 
                 }
-                if (message == "delete")
-                {
-                    File.Delete(path);
-                    if (File.Exists(path))
-                    {
-                        Console.WriteLine("error\nTrying another time...");
-                        File.Delete(path);
-                        if (!File.Exists(path))
-                        {
-                            Console.WriteLine("error again, try another time");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("deleted");
-                    }
-                }
+                
                 if (message != "send" && message != "delete" && message != "change")
                 {
                     
@@ -179,157 +163,212 @@ namespace chatik
         }
         public static void Request()
         {
-            string firstPartOfHtml = "<!DOCTYPE html >\r\n\r\n \r\n<head>\r\n    <meta charset=\"utf-8\" />\r\n    <title></title>\r\n</head>\r\n<body>\r\n    <form action=\"http://127.0.0.1:81/message\" method =\"post\">\r\n        <ul>\r\n            <li class=\"input_message\">\r\n                <input type=\"text\" id=\"name\" name=\"message\" placeholder=\"write message\" />\r\n            </li>\r\n            <li class=\"button\">\r\n                <button type=\"submit\">Send your message</button>\r\n            </li>\r\n        </ul>\r\n        ";
+            string firstPartOfHtml = "<!DOCTYPE html >\r\n\r\n \r\n<head>\r\n    <meta charset=\"utf-8\" />\r\n    <title></title>\r\n</head>\r\n<body>\r\n    <form action=\" http://prompt.modeller.fvds.ru:81/message\" method =\"post\">\r\n        <ul>\r\n            <li class=\"input_message\">\r\n                <input type=\"text\" id=\"name\" name=\"message\" placeholder=\"write message\" />\r\n            </li>\r\n            <li class=\"button\">\r\n                <button type=\"submit\">Send your message</button>\r\n            </li>\r\n        </ul>\r\n        ";
             string secondPartOfHtml = "\r\n    </form>\r\n\r\n    <style>\r\n        form {\r\n            /* Center the form on the page */\r\n            margin: 0 auto;\r\n            width: 400px;\r\n            /* Form outline */\r\n            padding: 1em;\r\n            border: 1px solid #CCC;\r\n            border-radius: 1em;\r\n        }\r\n\r\n        ul {\r\n            list-style: none;\r\n            padding: 0;\r\n            margin: 0;\r\n        }\r\n\r\n        form li + li {\r\n            margin-top: 1em;\r\n        }\r\n\r\n        label {\r\n            /* Uniform size & alignment */\r\n            display: inline-block;\r\n            width: 90px;\r\n            text-align: right;\r\n        }\r\n\r\n        input,\r\n        textarea {\r\n            /* To make sure that all text fields have the same font settings\r\n     By default, textareas have a monospace font */\r\n            font: 1em sans-serif;\r\n            /* Uniform text field size */\r\n            width: 300px;\r\n            box-sizing: border-box;\r\n            /* Match form field borders */\r\n            border: 1px solid #999;\r\n        }\r\n\r\n            input:focus,\r\n            textarea:focus {\r\n                /* Additional highlight for focused elements */\r\n                border-color: #000;\r\n            }\r\n\r\n        textarea {\r\n            /* Align multiline text fields with their labels */\r\n            vertical-align: top;\r\n            /* Provide space to type some text */\r\n            height: 5em;\r\n        }\r\n\r\n        .button {\r\n            /* Align buttons with the text fields */\r\n            padding-left: 90px; /* same size as the label elements */\r\n        }\r\n\r\n        button {\r\n            /* This extra margin represent roughly the same space as the space\r\n     between the labels and their text fields */\r\n            margin-left: .5em;\r\n        }\r\n    </style>\r\n</body>\r\n</html>";
 
-
+            string previousClientIp = null;
             /*string path = 
             string urlAdd = "sosuxui";*/
             while (true)
             {
                 
-                Console.WriteLine("Awaiting for a connection..\n");
+                
                 HttpListenerContext context = listener.GetContext();
 
                 var contextPath = context.Request.Url.AbsolutePath;
                 var request = context.Request;
                 HttpListenerResponse response = context.Response;
+                
                 string clientIP = context.Request.RemoteEndPoint.ToString();
                 var fileCodeName = contextPath.Remove(0, 1);
                 
-                string customerID = null;
-                string user_name;
-                bool cookies = false;
-                Cookie cookie = request.Cookies["ID"];
-                string myCustomer = cookie.Value;
-                if (fileCodeName == "chatik")
+                
+               
+                if (fileCodeName != "favicon.ico")
                 {
-                    Console.WriteLine("Main page requested");
-                    string htmlPage = File.ReadAllText("chatik.html");
-                    byte[] buffer = Encoding.UTF8.GetBytes(htmlPage);
-
-                    response.ContentLength64 = buffer.Length;
-                    Stream st = response.OutputStream;
-                    st.Write(buffer, 0, buffer.Length);
-                    customerID = "";
-                    Cookie cook = new Cookie("ID", customerID);
-                    response.AppendCookie(cook);
-                    context.Response.Close();
-                    
-                }
-                else
-                {
-                    using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
-
+                    string customerID = null;
+                    string user_name;
+                    bool cookies = true;
+                    bool isDeleted = false;
+                    string myCustomer;
+                    Cookie cookie = request.Cookies["ID"];
+                    Console.WriteLine("Awaiting for a connection..\n");
+                    if (cookie != null)
                     {
-                        string text = reader.ReadToEnd().ToString();
-                        var tokens = text.Split("&");
-                        var formData = new Dictionary<string, string>();
-                        for (var i = 0; i < tokens.Count(); i++)
-                        {
-                            if (tokens[i] == "")
-                                break;
-                            var group = tokens[i].ToString().Split("=");
-
-                            var item = group[0].ToString();
-                            var value = group[1].ToString();
-
-                            if (!formData.ContainsKey(item))
-                                formData.Add(item, value);
-                        }
-
-                        if (formData.TryGetValue("user_name", out string username))
-                            user_name = formData["user_name"];
-                        else 
-                        {
-                            user_name = "";
-                        }
-                        if (formData.TryGetValue("message", out string userMessages))
-                        {
-                            using (StreamWriter sw = File.AppendText($"{myCustomer}.txt"))
-                            {
-                                sw.WriteLine($"{userMessages}");
-                            }
-                        }
-                        if (formData.TryGetValue("cookies", out string cookies_switcher))
-                        {
-                            cookies = true;
-                        }
-
-                    }
-
-                    if (cookies || user_name == "")
-                    {
-                        
-                        if (cookie != null)
-                        {
-                            customerID = cookie.Value;
-                        }
-                        if (customerID != null)
-                        {
-                            Console.WriteLine("Found the cookie!");
-                        }
-                        if (customerID == null || (customerID.ToString() != user_name && user_name != ""))
-                        {
-                            customerID = user_name;
-                            Cookie cook = new Cookie("ID", customerID);
-                            response.AppendCookie(cook);
-
-                        }
-                        path = $"{customerID}.txt";
+                        myCustomer = cookie.Value;
                     }
                     else
                     {
-                        path = $"{user_name}.txt";
+                        myCustomer = null;
                     }
-
-
-                    /*urlAdd = Guid.NewGuid().ToString();
-                    fileLinks.TryAdd(urlAdd, path);*/
-                    /*if (user_name == "chatik")
+                    if (fileCodeName == "chatik")
                     {
+                        Console.WriteLine("Main page requested");
                         string htmlPage = File.ReadAllText("chatik.html");
                         byte[] buffer = Encoding.UTF8.GetBytes(htmlPage);
 
                         response.ContentLength64 = buffer.Length;
                         Stream st = response.OutputStream;
                         st.Write(buffer, 0, buffer.Length);
-
+                        customerID = "";
+                        Cookie cook = new Cookie("ID", customerID);
+                        response.AppendCookie(cook);
                         context.Response.Close();
-                    }*/
-                    if (fileCodeName != "favicon.ico")
+
+                    }
+                    else
                     {
-                        Console.WriteLine(clientIP);
-                        Console.WriteLine(fileCodeName);
-                        if (File.Exists(path))
+                        using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
+
                         {
-                            using (StreamReader sr = File.OpenText(path))
+                            string text = reader.ReadToEnd().ToString();
+                            var tokens = text.Split("&");
+                            var formData = new Dictionary<string, string>();
+                            for (var i = 0; i < tokens.Count(); i++)
                             {
-                                string myResponse = "";
-                                string s = "";
-                                while ((s = sr.ReadLine()) != null)
-                                {
+                                if (tokens[i] == "")
+                                    break;
+                                var group = tokens[i].ToString().Split("=");
 
-                                    myResponse += $"{s}\n\r";
+                                var item = group[0].ToString();
+                                var value = group[1].ToString();
 
-                                }
-                                context.Response.StatusCode = (int)HttpStatusCode.OK;
-                                context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{firstPartOfHtml}<p>{myResponse}</p>{secondPartOfHtml}"));
-                                context.Response.Close();
-                                Console.WriteLine("Connection established");
-
+                                if (!formData.ContainsKey(item))
+                                    formData.Add(item, value);
                             }
 
+                            if (formData.TryGetValue("user_name", out string username))
+                                user_name = formData["user_name"];
+                            else
+                            {
+                                user_name = "";
+                            }
+                            if (formData.TryGetValue("message", out string userMessages) && cookie != null)
+                            {
+                                
+                                myCustomer = $"{myCustomer}.txt";
+                                if (userMessages == "delete")
+                                {
+                                    File.Delete(myCustomer);
+                                    if (File.Exists(myCustomer))
+                                    {
+                                        context.Response.StatusCode = (int)HttpStatusCode.OK;
+                                        context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{firstPartOfHtml}<br>Chat was not deleted</br>{secondPartOfHtml}"));
+                                        context.Response.Close();
+                                        File.Delete(myCustomer);
+                                       
+                                        
+
+                                    }
+                                    else
+                                    {
+                                        previousClientIp = null;
+                                        isDeleted = true;
+                                        context.Response.StatusCode = (int)HttpStatusCode.OK;
+                                        context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{firstPartOfHtml}<br>Chat was deleted</br>{secondPartOfHtml}"));
+                                        context.Response.Close();
+                                    }
+                                }
+                                else
+                                {
+                                    using (StreamWriter sw = File.AppendText(myCustomer))
+                                    {
+                                        if (previousClientIp == clientIP)
+                                        {
+                                            sw.WriteLine($"{userMessages}");
+
+                                        }
+                                        else
+                                        {
+                                            sw.WriteLine($"{clientIP}: {userMessages}");
+                                            previousClientIp = clientIP;
+                                            Console.WriteLine($"formData.TryGetValue {previousClientIp}");
+                                        }
+
+
+                                    }
+                                }
+                                
+                                
+                            }
+
+
+                        }
+
+                        if (cookies || user_name == "")
+                        {
+
+                            if (cookie != null)
+                            {
+                                customerID = cookie.Value;
+                            }
+                            if (customerID != null)
+                            {
+                                Console.WriteLine("Found the cookie!");
+                            }
+                            if (customerID == null || (customerID.ToString() != user_name && user_name != ""))
+                            {
+                                customerID = user_name;
+                                Cookie cook = new Cookie("ID", customerID);
+                                response.AppendCookie(cook);
+
+                            }
+                            path = $"{customerID}.txt";
                         }
                         else
                         {
-                            context.Response.StatusCode = (int)HttpStatusCode.OK;
-                            context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"<html><head><meta charset='utf8'></head><body>This is the start of conversation</body></html>"));
+                            path = $"{user_name}.txt";
+                        }
+
+
+                        /*urlAdd = Guid.NewGuid().ToString();
+                        fileLinks.TryAdd(urlAdd, path);*/
+                        /*if (user_name == "chatik")
+                        {
+                            string htmlPage = File.ReadAllText("chatik.html");
+                            byte[] buffer = Encoding.UTF8.GetBytes(htmlPage);
+
+                            response.ContentLength64 = buffer.Length;
+                            Stream st = response.OutputStream;
+                            st.Write(buffer, 0, buffer.Length);
+
                             context.Response.Close();
-                            Console.WriteLine("sent");
+                        }*/
+                        if (fileCodeName != "favicon.ico" && !isDeleted)
+                        {
+                            Console.WriteLine(clientIP);
+                            Console.WriteLine(fileCodeName);
+                            if (File.Exists(path))
+                            {
+                                using (StreamReader sr = File.OpenText(path))
+                                {
+                                    string myResponse = "";
+                                    string s = "";
+                                    while ((s = sr.ReadLine()) != null)
+                                    {
+
+                                        myResponse += $"<p>{s}</p>\n\r";
+
+                                    }
+                                    context.Response.StatusCode = (int)HttpStatusCode.OK;
+                                    context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{firstPartOfHtml}<p>Chat: {path}\n</p>{myResponse}{secondPartOfHtml}"));
+                                    context.Response.Close();
+                                    Console.WriteLine("Connection established");
+
+                                }
+
+                            }
+                            else
+                            {
+                                context.Response.StatusCode = (int)HttpStatusCode.OK;
+                                context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"<html><head><meta charset='utf8'></head><body>This is the start of conversation</body></html>"));
+                                context.Response.Close();
+                                Console.WriteLine("sent");
+                            }
                         }
                     }
-                }     
+                }
+                
             }
         }
     }  
