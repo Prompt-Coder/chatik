@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using MySql.Data.MySqlClient;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -12,21 +13,10 @@ using System.Threading;
 using System.Threading.Tasks;
 
 
+
 namespace chatik
 {
-    /*class LoginData
-    {
-        public string path;
-        public string udlAdd;
-        public LoginData(string x, string y)
-        {
-            path = x;
-            udlAdd = y;
-            
-        }
-        
-    }
-*/
+
     class ChatMessage
     {
         public static HttpListener listener;
@@ -40,7 +30,6 @@ namespace chatik
         public static void Main()
         {
 
-            
             Console.WriteLine("Current working directory: " + Directory.GetCurrentDirectory());
             listener = new HttpListener();
             listener.Prefixes.Add("http://*:81/");
@@ -169,6 +158,7 @@ namespace chatik
             string previousClientIp = null;
             /*string path = 
             string urlAdd = "sosuxui";*/
+            var cookieGuid = new Dictionary<string, string>();
             while (true)
             {
                 
@@ -188,6 +178,7 @@ namespace chatik
                 {
                     string customerID = null;
                     string user_name;
+                    string password;
                     bool cookies = true;
                     bool isDeleted = false;
                     string myCustomer;
@@ -243,6 +234,8 @@ namespace chatik
                             {
                                 user_name = "";
                             }
+                            if (formData.TryGetValue("password", out string newPassword))
+                                password = formData["password"];
                             if (formData.TryGetValue("message", out string userMessages) && cookie != null)
                             {
                                 
@@ -310,7 +303,8 @@ namespace chatik
                             }
                             if (customerID == null || (customerID.ToString() != user_name && user_name != ""))
                             {
-                                customerID = user_name;
+
+                                customerID = Guid.NewGuid().ToString();
                                 Cookie cook = new Cookie("ID", customerID);
                                 response.AppendCookie(cook);
 
