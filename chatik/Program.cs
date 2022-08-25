@@ -11,8 +11,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-
-
+using Microsoft.EntityFrameworkCore;
 
 namespace chatik
 {
@@ -25,11 +24,12 @@ namespace chatik
         static string path;
         static string urlAdd = "nechatik";
         static string urlHttp = "main";
+        public static Mysql mainContext;
 
 
         public static void Main()
         {
-
+            mainContext = new Mysql();
             Console.WriteLine("Current working directory: " + Directory.GetCurrentDirectory());
             listener = new HttpListener();
             listener.Prefixes.Add("http://*:81/");
@@ -374,6 +374,26 @@ namespace chatik
                     }
                 }
                 
+            }
+        }
+        public class Mysql : DbContext
+        {
+            public DbSet<ChatikUsers> chats { get; set; }
+            public DbSet<ChatikChats> users { get; set; }
+            public Mysql()
+            {
+                Database.EnsureCreated();
+            }
+
+
+            protected override void OnConfiguring(DbContextOptionsBuilder optBuilder)
+            {
+                MySqlConnectionStringBuilder csb = new MySqlConnectionStringBuilder();
+                csb.Database = "prompt";
+                csb.Server = "92.63.103.70";
+                csb.UserID = "discord";
+                csb.Password = "PI5oW7t5YE";
+                optBuilder.UseMySQL(csb.ToString());
             }
         }
     }  
