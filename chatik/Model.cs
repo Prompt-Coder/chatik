@@ -7,16 +7,16 @@ public class ChatikUsers
 {
     [Key]
     public long Id { get; set; }
-    public string user { get; set; }
-    public string password { get; set; }
-    public string chats { get; set; }
+    public string User { get; set; }
+    public string Password { get; set; }
+    public string Chats { get; set; }
 
 }
 
 public class ChatikChats
 {
     [Key]
-    public string chatName { get; set; }
-    public string chatPass { get; set; }
-    public string  messages { get; set; }
+    public string ChatName { get; set; }
+    public string ChatPass { get; set; }
+    public string  Messages { get; set; }
 }

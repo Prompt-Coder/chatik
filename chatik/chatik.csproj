@@ -8,8 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.10" />
-    <PackageReference Include="MySql.Data.EntityFrameworkCore" Version="6.10.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.8" />
+    <PackageReference Include="MySql.EntityFrameworkCore" Version="6.0.4" />
   </ItemGroup>
 
 </Project>

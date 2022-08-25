@@ -31,6 +31,9 @@ namespace chatik
         {
             mainContext = new Mysql();
             Console.WriteLine("Current working directory: " + Directory.GetCurrentDirectory());
+            var currentModel = new ChatikUsers { User = "test",  Password = "1234", Chats = "0" };
+            mainContext.Users.Add(currentModel);
+            mainContext.SaveChanges();
             listener = new HttpListener();
             listener.Prefixes.Add("http://*:81/");
             listener.IgnoreWriteExceptions = true;
@@ -378,8 +381,8 @@ namespace chatik
         }
         public class Mysql : DbContext
         {
-            public DbSet<ChatikUsers> chats { get; set; }
-            public DbSet<ChatikChats> users { get; set; }
+            public DbSet<ChatikUsers> Users { get; set; }
+            public DbSet<ChatikChats> Chats { get; set; }
             public Mysql()
             {
                 Database.EnsureCreated();
@@ -389,7 +392,7 @@ namespace chatik
             protected override void OnConfiguring(DbContextOptionsBuilder optBuilder)
             {
                 MySqlConnectionStringBuilder csb = new MySqlConnectionStringBuilder();
-                csb.Database = "prompt";
+                csb.Database = "chatik_data";
                 csb.Server = "92.63.103.70";
                 csb.UserID = "discord";
                 csb.Password = "PI5oW7t5YE";
