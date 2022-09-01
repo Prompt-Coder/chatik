@@ -372,45 +372,32 @@ namespace chatik
                     {
                         using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
 
-
                         {
                             string text = reader.ReadToEnd().ToString();
-                            var tokens = text.Split("&");
-                            if (tokens.Length > 1)
+                            var tokens = text.Split("=");
+                            if (tokens[1] != "")
                             {
-                                var formData = new Dictionary<string, string>();
-                                for (var i = 0; i < tokens.Count(); i++)
+                                var myChat = tokens[0];
+                                var chats = mainContext.Chats.ToList();
+                                var entity = mainContext.Chats.FirstOrDefault(item => item.ChatName == "firstchat+");
+                                foreach (var chat in chats)
                                 {
-                                    if (tokens[i] == "")
+                                    if (chat.ChatName == myChat)
+                                    {
+                                        
+                                        var messages = chat.Messages;
+                                        var differentLink = firstPartOfHtml.Replace("message", "chat");
+                                        context.Response.StatusCode = (int)HttpStatusCode.OK;
+                                        context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{differentLink}            <li class=\"input_message\">\r\n                <input type=\"text\" id=\"name\" name=\"{myChat}\" placeholder=\"write message\" />\r\n            </li>\r\n            <li class=\"button\">\r\n                <button type=\"submit\">Send your message</button>\r\n            </li>\r\n        </ul>\r\n        <p>Chat: {path}\n</p>{messages}{secondPartOfHtml}"));
+                                        context.Response.Close();
+                                        Console.WriteLine("Connection established");
                                         break;
-                                    var group = tokens[i].ToString().Split("=");
-
-                                    var item = group[0].ToString();
-                                    var value = group[1].ToString();
-
-                                    if (!formData.ContainsKey(item))
-                                        formData.Add(item, value);
-                                }
-                                if (formData.TryGetValue("message", out string userMessages))
-                                {
-
-                                    /*if (previousClientIp == clientIP)
-                                    {
-                                        sw.WriteLine($"{userMessages}");
-
                                     }
-                                    else
-                                    {
-                                        sw.WriteLine($"{clientIP}: {userMessages}");
-                                        previousClientIp = clientIP;
-                                        Console.WriteLine($"formData.TryGetValue {previousClientIp}");
-                                    }*/
-
-
-
-
                                 }
                             }
+                                /*if (formData.TryGetValue("message", out string userMessages)) { 
+                                }*/
+                            
                             else
                             {
                                 var myChat = text.Replace("=", "+");
@@ -420,8 +407,9 @@ namespace chatik
                                     if (chat.ChatName == myChat)
                                     {
                                         var messages = chat.Messages;
+                                        var differentLink = firstPartOfHtml.Replace("message", "chat");
                                         context.Response.StatusCode = (int)HttpStatusCode.OK;
-                                        context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{firstPartOfHtml}            <li class=\"input_message\">\r\n                <input type=\"text\" id=\"name\" name=\"message\" placeholder=\"write message\" />\r\n            </li>\r\n            <li class=\"button\">\r\n                <button type=\"submit\">Send your message</button>\r\n            </li>\r\n        </ul>\r\n        <p>Chat: {path}\n</p>{messages}{secondPartOfHtml}"));
+                                        context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{differentLink}            <li class=\"input_message\">\r\n                <input type=\"text\" id=\"name\" name=\"{myChat}\" placeholder=\"write message\" />\r\n            </li>\r\n            <li class=\"button\">\r\n                <button type=\"submit\">Send your message</button>\r\n            </li>\r\n        </ul>\r\n        <p>Chat: {path}\n</p>{messages}{secondPartOfHtml}"));
                                         context.Response.Close();
                                         Console.WriteLine("Connection established");
                                         break;
