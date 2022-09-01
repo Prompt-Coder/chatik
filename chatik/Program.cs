@@ -154,9 +154,9 @@ namespace chatik
                 
                 string clientIP = context.Request.RemoteEndPoint.ToString();
                 var fileCodeName = contextPath.Remove(0, 1);
-                
-                
-               
+
+
+
                 if (fileCodeName != "favicon.ico")
                 {
                     string customerID = null;
@@ -193,7 +193,7 @@ namespace chatik
                         context.Response.Close();
 
                     }
-                    else
+                    if (fileCodeName == "message")
                     {
                         using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
 
@@ -222,61 +222,12 @@ namespace chatik
                             }
                             if (formData.TryGetValue("password", out string newPassword))
                                 password = formData["password"];
-                            
+
                             if (formData.TryGetValue("register", out string registration))
                             {
                                 registring = true;
                             }
-                            if (formData.TryGetValue("message", out string userMessages) && cookie != null)
-                            {
-                                
-                                myCustomer = $"{myCustomer}.txt";
-                                if (userMessages == "delete")
-                                {
-                                    File.Delete(myCustomer);
-                                    if (File.Exists(myCustomer))
-                                    {
-                                        context.Response.StatusCode = (int)HttpStatusCode.OK;
-                                        context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{firstPartOfHtml}<br>Chat was not deleted</br>{secondPartOfHtml}"));
-                                        context.Response.Close();
-                                        File.Delete(myCustomer);
-                                       
-                                        
 
-                                    }
-                                    else
-                                    {
-                                        previousClientIp = null;
-                                        isDeleted = true;
-                                        context.Response.StatusCode = (int)HttpStatusCode.OK;
-                                        context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{firstPartOfHtml}<br>Chat was deleted</br>{secondPartOfHtml}"));
-                                        context.Response.Close();
-                                    }
-                                }
-                                else
-                                {
-                                    userMessages = System.Web.HttpUtility.UrlEncode(userMessages);
-                                    using (StreamWriter sw = File.AppendText(myCustomer))
-                                    {
-                                        if (previousClientIp == clientIP)
-                                        {
-                                            sw.WriteLine($"{userMessages}");
-
-                                        }
-                                        else
-                                        {
-                                            sw.WriteLine($"{clientIP}: {userMessages}");
-                                            previousClientIp = clientIP;
-                                            Console.WriteLine($"formData.TryGetValue {previousClientIp}");
-                                        }
-
-
-                                    }
-                                }
-
-
-
-                            }
 
 
                         }
@@ -322,7 +273,7 @@ namespace chatik
                                 context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{firstPartOfHtml}<br> Such user already exists </br>{secondPartOfHtml}"));
                                 context.Response.Close();
                             }
-                            
+
                         }
                         else
                         {
@@ -337,7 +288,7 @@ namespace chatik
                                         access = true;
                                         currentClient = item;
                                     }
-                                        
+
                                     else
                                     {
                                         context.Response.StatusCode = (int)HttpStatusCode.OK;
@@ -350,31 +301,34 @@ namespace chatik
                             if (!isFound)
                             {
                                 context.Response.StatusCode = (int)HttpStatusCode.OK;
-                                context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{firstPartOfHtml}<br>Thisnuser does not exist. Better register it now!</br>{secondPartOfHtml}"));
+                                context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{firstPartOfHtml}<br>This user does not exist. Better register it now!</br>{secondPartOfHtml}"));
                                 context.Response.Close();
                             }
 
                         }
 
-                        if (fileCodeName != "favicon.ico" && !isDeleted && access)
+                        if (fileCodeName != "favicon.ico" && access)
                         {
                             Console.WriteLine(clientIP);
                             Console.WriteLine(fileCodeName);
                             var availableChats = currentClient.Chats;
-                            string[] sortedChats = availableChats.ToString().Split("+");
+                            var sortedChats = availableChats.ToString().Split("+").ToList();
+                            sortedChats.RemoveAt(sortedChats.Count - 1);
                             string myResponse = "";
                             if (availableChats[0] != '0')
                             {
                                 foreach (var chat in sortedChats)
                                 {
-                                    myResponse += $"<li class=\"button\">\r\n                <button type=\"submit\" name = \"{chat}\">{chat}</button>\r\n            </li>\r\n  ";                                                        }
+                                    myResponse += $"<li class=\"button\">\r\n                <button type=\"submit\" name = \"{chat}\">{chat}</button>\r\n            </li>\r\n  ";
+                                }
                             }
-                            
+
                             context.Response.StatusCode = (int)HttpStatusCode.OK;
-                            context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{firstPartOfHtml}{myResponse}{secondPartOfHtml}"));
+                            var differentLink = firstPartOfHtml.Replace("message", "chat");
+                            context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{differentLink}{myResponse}{secondPartOfHtml}"));
                             context.Response.Close();
                             Console.WriteLine("Connection established");
-                            
+
 
                             /* if (File.Exists(path))
                              {
@@ -414,8 +368,72 @@ namespace chatik
                              }*/
                         }
                     }
+                    if (fileCodeName == "chat")
+                    {
+                        using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
+
+
+                        {
+                            string text = reader.ReadToEnd().ToString();
+                            var tokens = text.Split("&");
+                            if (tokens.Length > 1)
+                            {
+                                var formData = new Dictionary<string, string>();
+                                for (var i = 0; i < tokens.Count(); i++)
+                                {
+                                    if (tokens[i] == "")
+                                        break;
+                                    var group = tokens[i].ToString().Split("=");
+
+                                    var item = group[0].ToString();
+                                    var value = group[1].ToString();
+
+                                    if (!formData.ContainsKey(item))
+                                        formData.Add(item, value);
+                                }
+                                if (formData.TryGetValue("message", out string userMessages))
+                                {
+
+                                    /*if (previousClientIp == clientIP)
+                                    {
+                                        sw.WriteLine($"{userMessages}");
+
+                                    }
+                                    else
+                                    {
+                                        sw.WriteLine($"{clientIP}: {userMessages}");
+                                        previousClientIp = clientIP;
+                                        Console.WriteLine($"formData.TryGetValue {previousClientIp}");
+                                    }*/
+
+
+
+
+                                }
+                            }
+                            else
+                            {
+                                var myChat = text.Replace("=", "+");
+                                var chats = mainContext.Chats.ToList();
+                                foreach (var chat in chats)
+                                {
+                                    if (chat.ChatName == myChat)
+                                    {
+                                        var messages = chat.Messages;
+                                        context.Response.StatusCode = (int)HttpStatusCode.OK;
+                                        context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{firstPartOfHtml}            <li class=\"input_message\">\r\n                <input type=\"text\" id=\"name\" name=\"message\" placeholder=\"write message\" />\r\n            </li>\r\n            <li class=\"button\">\r\n                <button type=\"submit\">Send your message</button>\r\n            </li>\r\n        </ul>\r\n        <p>Chat: {path}\n</p>{messages}{secondPartOfHtml}"));
+                                        context.Response.Close();
+                                        Console.WriteLine("Connection established");
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            
+
+                        }
+                    }
                 }
-                
             }
         }
         public class Mysql : DbContext
