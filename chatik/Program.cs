@@ -148,7 +148,7 @@ namespace chatik
                 
                 HttpListenerContext context = listener.GetContext();
                 if (context.Request is null)
-                    return;
+                    continue;
                 var contextPath = context.Request?.Url?.AbsolutePath;
                 var request = context.Request;
                 HttpListenerResponse response = context.Response;
@@ -170,15 +170,7 @@ namespace chatik
                     bool access = false;
                     ChatikUsers currentClient = null;
                     Cookie cookie = request.Cookies["ID"];
-                    Console.WriteLine("Awaiting for a connection..\n");
-                    if (cookie != null)
-                    {
-                        myCustomer = cookie.Value;
-                    }
-                    else
-                    {
-                        myCustomer = null;
-                    }
+                    Console.WriteLine("Awaiting for a connection..\n"); 
                     if (fileCodeName == "chatik")
                     {
                         Console.WriteLine("Main page requested");
@@ -233,7 +225,7 @@ namespace chatik
 
                         }
 
-                        if (cookies /*|| user_name == ""*/)
+                        /*if (cookies *//*|| user_name == ""*//*)
                         {
 
                             if (cookie != null)
@@ -244,7 +236,7 @@ namespace chatik
                             {
                                 Console.WriteLine("Found the cookie!");
                             }
-                            if (customerID == null /*|| (customerID.ToString() != user_name && user_name != "")*/)
+                            if (customerID == null *//*|| (customerID.ToString() != user_name && user_name != "")*//*)
                             {
 
                                 customerID = Guid.NewGuid().ToString();
@@ -257,7 +249,7 @@ namespace chatik
                         else
                         {
                             path = $"{user_name}.txt";
-                        }
+                        }*/
                         if (registring)
                         {
                             var userCheck = mainContext.Users.FirstOrDefault(user => user.User == user_name);
@@ -330,44 +322,6 @@ namespace chatik
                             context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{differentLink}{myResponse}{secondPartOfHtml}"));
                             context.Response.Close();
                             Console.WriteLine("Connection established");
-
-
-                            /* if (File.Exists(path))
-                             {
-                                 using (StreamReader sr = File.OpenText(path))
-                                 {
-                                     string myResponse = "";
-                                     string s = "";
-                                     while ((s = sr.ReadLine()) != null)
-                                     {
-
-                                         myResponse += $"<p>{s}</p>\n\r";
-
-                                     }
-                                     context.Response.StatusCode = (int)HttpStatusCode.OK;
-                                     context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{firstPartOfHtml}            <li class=\"input_message\">\r\n                <input type=\"text\" id=\"name\" name=\"message\" placeholder=\"write message\" />\r\n            </li>\r\n            <li class=\"button\">\r\n                <button type=\"submit\">Send your message</button>\r\n            </li>\r\n        </ul>\r\n        <p>Chat: {path}\n</p>{myResponse}{secondPartOfHtml}"));
-                                     context.Response.Close();
-                                     Console.WriteLine("Connection established");
-
-                                 }
-
-                             }
-                             else
-                             {
-                                 if (!File.Exists(path))
-                                 {
-                                     // Create a file to write to.
-                                     using (StreamWriter sw = File.CreateText(path))
-                                     {
-                                         sw.WriteLine($"test");
-                                     }
-                                 }
-                                 context.Response.StatusCode = (int)HttpStatusCode.OK;
-                                 context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{firstPartOfHtml}<p>Chat: {path}\n</p>{secondPartOfHtml}"));
-                                 context.Response.Close();
-                                 Console.WriteLine("Connection established");
-
-                             }*/
                         }
                     }
                     if (fileCodeName == "chat")
