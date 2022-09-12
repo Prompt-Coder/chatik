@@ -42,7 +42,7 @@ namespace chatik
                 
             }
             
-
+            
             Console.WriteLine(sw.ElapsedMilliseconds);
             mainContext.SaveChanges();
             listener = new HttpListener();
@@ -135,9 +135,12 @@ namespace chatik
         public static void Request()
         {
             /*var encoded = File.ReadAllText("main.html");*/
-            string firstPartOfHtml = "<!DOCTYPE html >\r\n\r\n<script charset=\"UTF - 8\"></script> \r\n<head>\r\n    <meta charset=\"utf-8\" />\r\n    <title></title>\r\n</head>\r\n<body>\r\n    <form action=\" http://prompt.modeller.fvds.ru:81/message\" method =\"post\">\r\n        <ul>\r\n";
-            string secondPartOfHtml = "\r\n    </form>\r\n\r\n    <style>\r\n        form {\r\n            /* Center the form on the page */\r\n            margin: 0 auto;\r\n            width: 400px;\r\n            /* Form outline */\r\n            padding: 1em;\r\n            border: 1px solid #CCC;\r\n            border-radius: 1em;\r\n        }\r\n\r\n        ul {\r\n            list-style: none;\r\n            padding: 0;\r\n            margin: 0;\r\n        }\r\n\r\n        form li + li {\r\n            margin-top: 1em;\r\n        }\r\n\r\n        label {\r\n            /* Uniform size & alignment */\r\n            display: inline-block;\r\n            width: 90px;\r\n            text-align: right;\r\n        }\r\n\r\n        input,\r\n        textarea {\r\n            /* To make sure that all text fields have the same font settings\r\n     By default, textareas have a monospace font */\r\n            font: 1em sans-serif;\r\n            /* Uniform text field size */\r\n            width: 300px;\r\n            box-sizing: border-box;\r\n            /* Match form field borders */\r\n            border: 1px solid #999;\r\n        }\r\n\r\n            input:focus,\r\n            textarea:focus {\r\n                /* Additional highlight for focused elements */\r\n                border-color: #000;\r\n            }\r\n\r\n        textarea {\r\n            /* Align multiline text fields with their labels */\r\n            vertical-align: top;\r\n            /* Provide space to type some text */\r\n            height: 5em;\r\n        }\r\n\r\n        .button {\r\n            /* Align buttons with the text fields */\r\n            padding-left: 90px; /* same size as the label elements */\r\n        }\r\n\r\n        button {\r\n            /* This extra margin represent roughly the same space as the space\r\n     between the labels and their text fields */\r\n            margin-left: .5em;\r\n        }\r\n    </style>\r\n</body>\r\n</html>";
-
+            string link = "http://127.0.0.1:81/message";
+            string linkChat = link.Replace("message", "chat");
+            string firstPartOfHtml = $"<!DOCTYPE html >\r\n\r\n<script charset=\"UTF - 8\"></script> \r\n<head>\r\n    <meta charset=\"utf-8\" />\r\n    <title></title>\r\n</head>\r\n<body>\r\n    <form action=\"{link}\" method =\"post\">\r\n        <ul>\r\n";
+            string secondPartOfHtml = "    <style>\r\n        form {\r\n            /* Center the form on the page */\r\n            margin: 0 auto;\r\n            width: 400px;\r\n            /* Form outline */\r\n            padding: 1em;\r\n            border: 1px solid #CCC;\r\n            border-radius: 1em;\r\n        }\r\n\r\n        ul {\r\n            list-style: none;\r\n            padding: 0;\r\n            margin: 0;\r\n        }\r\n\r\n        form li + li {\r\n            margin-top: 1em;\r\n        }\r\n\r\n        label {\r\n            /* Uniform size & alignment */\r\n            display: inline-block;\r\n            width: 90px;\r\n            text-align: right;\r\n        }\r\n\r\n        input,\r\n        textarea {\r\n            /* To make sure that all text fields have the same font settings\r\n     By default, textareas have a monospace font */\r\n            font: 1em sans-serif;\r\n            /* Uniform text field size */\r\n            width: 300px;\r\n            box-sizing: border-box;\r\n            /* Match form field borders */\r\n            border: 1px solid #999;\r\n        }\r\n\r\n            input:focus,\r\n            textarea:focus {\r\n                /* Additional highlight for focused elements */\r\n                border-color: #000;\r\n            }\r\n\r\n        textarea {\r\n            /* Align multiline text fields with their labels */\r\n            vertical-align: top;\r\n            /* Provide space to type some text */\r\n            height: 5em;\r\n        }\r\n\r\n        .button {\r\n            /* Align buttons with the text fields */\r\n            padding-left: 90px; /* same size as the label elements */\r\n        }\r\n\r\n        button {\r\n            /* This extra margin represent roughly the same space as the space\r\n     between the labels and their text fields */\r\n            margin-left: .5em;\r\n        }\r\n    </style>\r\n</body>\r\n</html>";
+            /*string htmlpage1 = File.ReadAllText("main.html");*/
+            string chatCreateButton = $"<form action=\"{link}\" method=\"post\" class=\"add\">\r\n        <input type=\"text\" id=\"chatname\" name=\"chat_name\" placeholder=\"Enter new chat name\" />\r\n        <button type=\"submit\" id=\"ChatCreate\" name=\"create_chat\">Create Chat</button>\r\n    </form>\r\n ";
             string previousClientIp = null;
             /*string path = 
             string urlAdd = "sosuxui";*/
@@ -208,7 +211,11 @@ namespace chatik
                             }
 
                             if (formData.TryGetValue("user_name", out string username))
+                            {
                                 user_name = formData["user_name"];
+
+                            }
+                               
                             else
                             {
                                 user_name = "";
@@ -219,10 +226,101 @@ namespace chatik
                             if (formData.TryGetValue("register", out string registration))
                             {
                                 registring = true;
+                                var userCheck = mainContext.Users.FirstOrDefault(user => user.User == user_name);
+                                if (userCheck != default)
+                                {
+                                    context.Response.StatusCode = (int)HttpStatusCode.OK;
+                                    context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{firstPartOfHtml}<br> Such user already exists </br>{secondPartOfHtml}"));
+                                    context.Response.Close();
+                                }
+                                else
+                                {
+                                    string cook;
+                                    if (cookie != null)
+                                    {
+                                        cook = cookie.Value;
+                                    }
+                                    else
+                                    {
+                                        Cookie newCook = new Cookie("ID", Guid.NewGuid().ToString());
+                                        response.AppendCookie(newCook);
+                                        cook = newCook.Value;
+                                    }
+                                    
+                                    var currentUser = new ChatikUsers { User = user_name, Password = password, Cookies = cook, Chats = "0" };
+                                    currentClient = currentUser;
+                                    mainContext.Users.Add(currentUser);
+                                    mainContext.SaveChanges();
+                                }
                             }
+                            if (formData.TryGetValue("login", out string login))
+                            {
+                                bool isFound = false;
+                                foreach (var item in mainContext.Users.ToList())
+                                {
+                                    if (item.User == user_name)
+                                    {
+                                        isFound = true;
+                                        if (item.Password == password)
+                                        {
 
+                                            access = true;
+                                            currentClient = item;
+                                            
+                                            cookie = new Cookie("ID", item.Cookies);
+                                            response.AppendCookie(cookie);
+                                        }
 
+                                        else
+                                        {
+                                            context.Response.StatusCode = (int)HttpStatusCode.OK;
+                                            context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{firstPartOfHtml}<br>Wrong password</br>{secondPartOfHtml}"));
+                                            context.Response.Close();
+                                        }
+                                        break;
+                                    }
+                                }
+                                if (!isFound)
+                                {
+                                    context.Response.StatusCode = (int)HttpStatusCode.OK;
+                                    context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{firstPartOfHtml}<br>This user does not exist. Better register it now!</br>{secondPartOfHtml}"));
+                                    context.Response.Close();
+                                }
+                            }
+                            if (formData.TryGetValue("create_chat", out string createChat))
+                            {
+                                if (formData.TryGetValue("chat_name", out string newChatName))
+                                {
+                                    var chatFind = mainContext.Chats.FirstOrDefault(chat => chat.ChatName == $"{newChatName}");
+                                    if (chatFind is null)
+                                    {
+                                        newChatName += "+";
+                                        var currentUser = mainContext.Users.FirstOrDefault(item => item.Cookies == $"{cookie.Value}");
+                                        Console.WriteLine(currentUser);
+                                        Console.WriteLine(cookie);
 
+                                        if (currentUser != null)
+                                        {
+                                            
+                                            var newChat = new ChatikChats { ChatName = $"{newChatName}", ChatPass = "0", Messages = ""};
+                                            mainContext.Chats.Add(newChat);
+                                            currentUser.Chats += $"{newChatName}\r\n";
+                                            mainContext.Update(currentUser);
+                                            mainContext.SaveChanges();
+                                            access = true;
+                                            currentClient = currentUser;
+                                        }
+                                        
+                                    }
+                                    else
+                                    {
+                                        context.Response.StatusCode = (int)HttpStatusCode.OK;
+                                        context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{firstPartOfHtml}<br> Such chat already exists </br>{secondPartOfHtml}"));
+                                        context.Response.Close();
+                                    }
+                                }
+                                    
+                            }
                         }
 
                         /*if (cookies *//*|| user_name == ""*//*)
@@ -250,63 +348,17 @@ namespace chatik
                         {
                             path = $"{user_name}.txt";
                         }*/
-                        if (registring)
-                        {
-                            var userCheck = mainContext.Users.FirstOrDefault(user => user.User == user_name);
-                            if (userCheck != default)
-                            {
-                                context.Response.StatusCode = (int)HttpStatusCode.OK;
-                                context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{firstPartOfHtml}<br> Such user already exists </br>{secondPartOfHtml}"));
-                                context.Response.Close();
-                            }
-                            else
-                            {
-                                var currentUser = new ChatikUsers { User = user_name, Password = password, Cookies = customerID, Chats = "0" };
-                                currentClient = currentUser;
-                                mainContext.Users.Add(currentUser);
-                                mainContext.SaveChanges();
-                            }
-                             
-
-                        }
-                        else
-                        {
-                            bool isFound = false;
-                            foreach (var item in mainContext.Users.ToList())
-                            {
-                                if (item.User == user_name)
-                                {
-                                    isFound = true;
-                                    if (item.Password == password)
-                                    {
-                                        access = true;
-                                        currentClient = item;
-                                    }
-
-                                    else
-                                    {
-                                        context.Response.StatusCode = (int)HttpStatusCode.OK;
-                                        context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{firstPartOfHtml}<br>Wrong password</br>{secondPartOfHtml}"));
-                                        context.Response.Close();
-                                    }
-                                    break;
-                                }
-                            }
-                            if (!isFound)
-                            {
-                                context.Response.StatusCode = (int)HttpStatusCode.OK;
-                                context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{firstPartOfHtml}<br>This user does not exist. Better register it now!</br>{secondPartOfHtml}"));
-                                context.Response.Close();
-                            }
-
-                        }
+                        
 
                         if (fileCodeName != "favicon.ico" && access)
                         {
                             Console.WriteLine(clientIP);
                             Console.WriteLine(fileCodeName);
+                            currentClient = mainContext.Users.FirstOrDefault(user => user.Cookies == cookie.Value);
+                            if (currentClient is null)
+                                continue;
                             var availableChats = currentClient.Chats;
-                            var sortedChats = availableChats.ToString().Split("+").ToList();
+                            var sortedChats = availableChats.ToString().Split("+\r\n").ToList();
                             sortedChats.RemoveAt(sortedChats.Count - 1);
                             string myResponse = "";
                             if (availableChats[0] != '0')
@@ -319,35 +371,76 @@ namespace chatik
 
                             context.Response.StatusCode = (int)HttpStatusCode.OK;
                             var differentLink = firstPartOfHtml.Replace("message", "chat");
-                            context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{differentLink}{myResponse}{secondPartOfHtml}"));
+                            context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{differentLink}{myResponse}\r\n    </form>\r\n\r\n{chatCreateButton}{secondPartOfHtml}"));
                             context.Response.Close();
                             Console.WriteLine("Connection established");
                         }
                     }
+                    string addPersonButton;
                     if (fileCodeName == "chat")
                     {
+                        
                         using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
 
                         {
                             string text = reader.ReadToEnd().ToString();
-                            var tokens = text.Split("=");
+                            var firstPart = text.Split("&");
+                            var tokens = firstPart[0].Split("=");
+                            if (firstPart.Length > 1)
+                            {
+                                if (tokens[0] == "new_user_name")
+                                {
+                                    var chatBelongingsCheck = mainContext.Users.FirstOrDefault(user => user.Cookies == $"{cookie.Value}");
+                                    if (chatBelongingsCheck != null) // looking for a person to have rights for that chat
+                                    {
+                                        string allChats = chatBelongingsCheck.Chats.ToString();
+                                        var currentChat = firstPart[1].Replace("%2B=", "+");
+                                        if (allChats.Contains(currentChat))
+                                        { // if person is in the chat he wants to add another person in
+                                            Console.WriteLine("contains");
+                                            var checkUserInSql = mainContext.Users.FirstOrDefault(user => user.User == $"{tokens[1]}"); //person which needs to be added
+                                            if (checkUserInSql != null) //if the person which need to be added exists
+                                            {
+                                                if (!checkUserInSql.Chats.ToString().Contains(currentChat))
+                                                {
+                                                    string chatRightName = Uri.UnescapeDataString(firstPart[1].ToString().Replace("%2B=", "+\r\n"));
+
+                                                    checkUserInSql.Chats += chatRightName;
+                                                    mainContext.Update(checkUserInSql);
+                                                    mainContext.SaveChanges();
+                                                }
+                                                
+                                            }
+                                        }
+                                    }
+                                }
+
+                                
+                                
+                            }
+                            
+                            
                             if (tokens[0] == "")
                                 continue;
-                            if (tokens[1] != "")
+                            if (tokens[1] != "") //when entered
                             {
                                 var myChat = tokens[0];
+                                
+                                
                                 string chatReplaced = Uri.UnescapeDataString(myChat);
                                 /*var chats = mainContext.Chats.ToList();*/
                                 var entity = mainContext.Chats.FirstOrDefault(item => item.ChatName == $"{chatReplaced}");
                                 if (entity is null)
-                                    break;
-                                entity.Messages += $"{tokens[1]}\n";
+                                    continue;
+                                addPersonButton = $"<form action=\"{linkChat}\" method=\"post\" class=\"addPerson\">\r\n        <input type=\"text\" id=\"newUserName\" name=\"new_user_name\" placeholder=\"Enter nickname of user to add\" />\r\n        <button type=\"submit\" id=\"UserAdd\" name=\"{myChat}\">Add user</button>\r\n    </form>\r\n";
+                                var messagesRedacted = Uri.UnescapeDataString(tokens[1]);
+                                entity.Messages += $"{messagesRedacted}\n";
                                 mainContext.Update(entity);
                                 mainContext.SaveChanges();
                                 var messages = entity.Messages;
                                 var differentLink = firstPartOfHtml.Replace("message", "chat");
                                 context.Response.StatusCode = (int)HttpStatusCode.OK;
-                                context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{differentLink}            <li class=\"input_message\">\r\n                <input type=\"text\" id=\"name\" name=\"{chatReplaced}\" placeholder=\"write message\" />\r\n            </li>\r\n            <li class=\"button\">\r\n                <button type=\"submit\">Send your message</button>\r\n            </li>\r\n        </ul>\r\n        <p>Chat: {path}\n</p>{messages}{secondPartOfHtml}"));
+                                context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{differentLink}            <li class=\"input_message\">\r\n                <input type=\"text\" id=\"name\" name=\"{chatReplaced}\" placeholder=\"write message\" />\r\n            </li>\r\n            <li class=\"button\">\r\n                <button type=\"submit\">Send your message</button>\r\n            </li>\r\n        </ul>\r\n        \r\n    </form>\r\n\r\n<p>Chat: {myChat}\n</p>{messages}{addPersonButton}{secondPartOfHtml}"));
                                 context.Response.Close();
                                 Console.WriteLine("Connection established");
 
@@ -355,18 +448,27 @@ namespace chatik
                                 /*if (formData.TryGetValue("message", out string userMessages)) { 
                                 }*/
                             
-                            else
+                            else //entering chat first time
                             {
-                                var myChat = text.Replace("=", "+");
+
+                                
+                                string chatReplaced = Uri.UnescapeDataString(text);
+                                var myChat = chatReplaced.Replace("=", "+");
+                                if (myChat.Contains("\r\n"))
+                                {
+                                    myChat.Remove(0,4);
+                                }
+                                
                                 var chats = mainContext.Chats.ToList();
                                 foreach (var chat in chats)
                                 {
                                     if (chat.ChatName == myChat)
                                     {
+                                        addPersonButton = $"<form action=\"{linkChat}\" method=\"post\" class=\"addPerson\">\r\n        <input type=\"text\" id=\"newUserName\" name=\"new_user_name\" placeholder=\"Enter nickname of user to add\" />\r\n        <button type=\"submit\" id=\"UserAdd\" name=\"{myChat}\">Add user</button>\r\n    </form>\r\n";
                                         var messages = chat.Messages;
                                         var differentLink = firstPartOfHtml.Replace("message", "chat");
                                         context.Response.StatusCode = (int)HttpStatusCode.OK;
-                                        context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{differentLink}            <li class=\"input_message\">\r\n                <input type=\"text\" id=\"name\" name=\"{myChat}\" placeholder=\"write message\" />\r\n            </li>\r\n            <li class=\"button\">\r\n                <button type=\"submit\">Send your message</button>\r\n            </li>\r\n        </ul>\r\n        <p>Chat: {path}\n</p>{messages}{secondPartOfHtml}"));
+                                        context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"{differentLink}            <li class=\"input_message\">\r\n                <input type=\"text\" id=\"name\" name=\"{myChat}\" placeholder=\"write message\" />\r\n            </li>\r\n            <li class=\"button\">\r\n                <button type=\"submit\">Send your message</button>\r\n            </li>\r\n        </ul>\r\n      \r\n    </form>\r\n\r\n  <p>Chat: {chatReplaced}\n</p>{messages}{addPersonButton}{secondPartOfHtml}"));
                                         context.Response.Close();
                                         Console.WriteLine("Connection established");
                                         break;
@@ -401,5 +503,7 @@ namespace chatik
                 optBuilder.UseMySQL(csb.ToString());
             }
         }
+
+        
     }  
 }
